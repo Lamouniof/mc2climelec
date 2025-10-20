@@ -1,48 +1,31 @@
-<!DOCTYPE html>
-<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Rendez-vous</title>
+    <title>Interface Professionnelle - Gestion des Rendez-vous</title>
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+      // REMPLACEZ CE CODE PAR VOTRE OBJET DE CONFIGURATION OBTENU À L'ÉTAPE 1
+      const firebaseConfig = {
+        apiKey: "VOTRE_API_KEY",
+        authDomain: "VOTRE_PROJECT_ID.firebaseapp.com",
+        projectId: "VOTRE_PROJECT_ID",
+        storageBucket: "VOTRE_PROJECT_ID.appspot.com",
+        messagingSenderId: "VOTRE_SENDER_ID",
+        appId: "VOTRE_APP_ID"
+      };
+
+      // Initialisation de Firebase
+      firebase.initializeApp(firebaseConfig);
+      // Référence à la base de données Firestore
+      const db = firebase.firestore();
+    </script>
+
 </head>
 <body>
-
-    <div id="login-section" class="container">
-        <h1>Accès Sécurisé</h1>
-        <p>Veuillez entrer le mot de passe pour continuer.</p>
-        <input type="password" id="password-input" placeholder="Mot de passe">
-        <button onclick="checkPassword()">Se Connecter</button>
-        <p id="error-message" class="error-message"></p>
-    </div>
-
-    <div id="app-section" class="container hidden">
-        <header>
-            <h2>Tableau de Bord des Rendez-vous</h2>
-            <button onclick="document.getElementById('add-modal').classList.remove('hidden')">Ajouter un Rendez-vous</button>
-        </header>
-
-        <div id="appointments-list">
-            </div>
-    </div>
-
-    <div id="add-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Ajouter un Nouveau Rendez-vous</h3>
-            <label for="date-input">Date:</label>
-            <input type="date" id="date-input" required>
-
-            <label for="time-input">Heure:</label>
-            <input type="time" id="time-input" required>
-
-            <label for="description-input">Description:</label>
-            <textarea id="description-input" rows="3" required></textarea>
-
-            <button onclick="addAppointment()">Enregistrer</button>
-            <button class="cancel-btn" onclick="document.getElementById('add-modal').classList.add('hidden')">Annuler</button>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
