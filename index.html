@@ -3,59 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Agenda Personnel</title>
+    <title>Interface Professionnelle - Gestion des Rendez-vous</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div id="login-box">
-            <h2>Accès Requis</h2>
-            <p>Veuillez entrer le mot de passe pour accéder à l'agenda.</p>
-            <form id="password-form">
-                <div class="form-group">
-                    <label for="password-input">Mot de passe :</label>
-                    <input type="password" id="password-input" required>
-                </div>
-                <button type="submit" class="btn">Valider</button>
-                <p id="password-error" class="error-message"></p>
-            </form>
-        </div>
+    <div id="login-section" class="container">
+        <h1>Accès Sécurisé</h1>
+        <p>Veuillez entrer le mot de passe pour continuer.</p>
+        <input type="password" id="password-input" placeholder="Mot de passe">
+        <button onclick="checkPassword()">Se Connecter</button>
+        <p id="error-message" class="error-message"></p>
     </div>
 
-    <div id="app-content" class="hidden">
+    <div id="app-section" class="container hidden">
         <header>
-            <h1>Mon Agenda</h1>
+            <h2>Tableau de Bord des Rendez-vous</h2>
+            <button onclick="document.getElementById('add-modal').classList.remove('hidden')">Ajouter un Rendez-vous</button>
         </header>
 
-        <main>
-            <div class="container">
-                <div class="calendar-container">
-                    <h2>Ajouter un rendez-vous</h2>
-                    <form id="event-form">
-                        <div class="form-group">
-                            <label for="event-date">Date :</label>
-                            <input type="date" id="event-date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="event-time">Heure :</label>
-                            <input type="time" id="event-time" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="event-desc">Description :</label>
-                            <textarea id="event-desc" rows="3" placeholder="Détails du RDV..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn">Ajouter</button>
-                    </form>
-                </div>
-
-                <div class="events-container">
-                    <h2>Mes rendez-vous</h2>
-                    <div id="event-list">
-                        </div>
-                </div>
+        <div id="appointments-list">
             </div>
-        </main>
+    </div>
+
+    <div id="add-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Ajouter un Nouveau Rendez-vous</h3>
+            <label for="date-input">Date:</label>
+            <input type="date" id="date-input" required>
+
+            <label for="time-input">Heure:</label>
+            <input type="time" id="time-input" required>
+
+            <label for="description-input">Description:</label>
+            <textarea id="description-input" rows="3" required></textarea>
+
+            <button onclick="addAppointment()">Enregistrer</button>
+            <button class="cancel-btn" onclick="document.getElementById('add-modal').classList.add('hidden')">Annuler</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
