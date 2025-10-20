@@ -1,6 +1,9 @@
 // Mot de passe : 250273
 const CORRECT_PASSWORD = "250273";
-const STORAGE_KEY = 'appointmentsData';
+// Nom de la collection dans Firestore
+const COLLECTION_NAME = "appointments"; 
+
+// La variable 'db' est déjà initialisée dans index.html
 
 // --- Gestion de la Connexion ---
 
@@ -9,71 +12,79 @@ function checkPassword() {
     const errorMsg = document.getElementById('error-message');
     
     if (input === CORRECT_PASSWORD) {
-        // Succès
-        localStorage.setItem('isAuthenticated', 'true');
+        // Succès : stocke l'état pour les rechargements futurs
+        sessionStorage.setItem('isAuthenticated', 'true');
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('app-section').classList.remove('hidden');
         errorMsg.textContent = "";
-        loadAppointments();
+        
+        // DÉCLENCHE L'ÉCOUTEUR EN TEMPS RÉEL
+        setupRealtimeListener(); 
     } else {
-        // Échec
         errorMsg.textContent = "Mot de passe incorrect.";
     }
 }
 
-// Vérifie si l'utilisateur est déjà connecté (si la page est rechargée)
+// Vérifie l'état de connexion au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('isAuthenticated') === 'true') {
+    // Note : On utilise sessionStorage ici pour obliger la reconnexion à chaque fermeture de l'onglet
+    if (sessionStorage.getItem('isAuthenticated') === 'true') {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('app-section').classList.remove('hidden');
-        loadAppointments();
+        setupRealtimeListener();
     }
-    // Simulation du "temps réel" via le polling toutes les 5 secondes
-    setInterval(loadAppointments, 5000); 
 });
 
-// --- Gestion des Rendez-vous ---
 
-// Fonction pour récupérer les données (simule la lecture du JSON)
-function getAppointments() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    // Tente de récupérer les données du stockage local, sinon retourne un tableau vide.
-    return data ? JSON.parse(data) : [];
+// ------------------------------------------------------------------
+// --- GESTION DES RENDEZ-VOUS EN TEMPS RÉEL AVEC CLOUD FIRESTORE ---
+// ------------------------------------------------------------------
+
+/**
+ * Configure un écouteur en temps réel sur la collection Firestore.
+ * C'EST CECI QUI GARANTIT LE "TEMPS RÉEL" ET LA PERSISTANCE.
+ */
+function setupRealtimeListener() {
+    // Trie les rendez-vous par date/heure
+    db.collection(COLLECTION_NAME).orderBy("dateTime", "asc").onSnapshot(snapshot => {
+        const appointments = [];
+        
+        // Pour chaque document reçu (ou modifié)
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            appointments.push({
+                id: doc.id, // ID unique Firestore
+                dateTime: data.dateTime,
+                description: data.description
+            });
+        });
+
+        // Met à jour l'interface avec les données fraîches
+        renderAppointments(appointments);
+        
+        console.log("Mise à jour en temps réel effectuée.");
+    }, error => {
+        console.error("Erreur lors de la récupération en temps réel : ", error);
+        document.getElementById('appointments-list').innerHTML = '<p style="color:red; text-align: center; padding: 20px;">Erreur de connexion à la base de données.</p>';
+    });
 }
 
-// Fonction pour sauvegarder les données (simule l'écriture dans le JSON)
-function saveAppointments(appointments) {
-    // Note : Cette fonction sauvegarde DANS le navigateur (localStorage), 
-    // elle ne peut PAS modifier le fichier data.json sur GitHub.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
-    renderAppointments(appointments);
-}
 
-// Fonction pour charger et afficher les rendez-vous
-function loadAppointments() {
-    // Dans un vrai scénario, on ferait un `fetch('/data.json')` ici.
-    // Pour la démo, on utilise le stockage local.
-    const appointments = getAppointments();
-    renderAppointments(appointments);
-}
-
-// Fonction pour afficher les rendez-vous dans l'interface
+// Fonction pour afficher les rendez-vous dans l'interface (aucune modification)
 function renderAppointments(appointments) {
     const list = document.getElementById('appointments-list');
-    list.innerHTML = ''; // Vide la liste
+    list.innerHTML = ''; 
 
-    // Triage par date et heure
-    const sortedAppointments = appointments.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-
-    if (sortedAppointments.length === 0) {
+    if (appointments.length === 0) {
         list.innerHTML = '<p style="text-align: center; padding: 20px;">Aucun rendez-vous planifié.</p>';
         return;
     }
 
-    sortedAppointments.forEach(app => {
+    appointments.forEach(app => {
         const item = document.createElement('div');
         item.classList.add('appointment-item');
         
+        // Utilisation des objets Date JavaScript
         const dateObj = new Date(app.dateTime);
         const dateStr = dateObj.toLocaleDateString('fr-FR');
         const timeStr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -86,7 +97,9 @@ function renderAppointments(appointments) {
     });
 }
 
-// Fonction pour ajouter un nouveau rendez-vous
+/**
+ * Ajoute un nouveau rendez-vous à la base de données Firestore.
+ */
 function addAppointment() {
     const dateInput = document.getElementById('date-input').value;
     const timeInput = document.getElementById('time-input').value;
@@ -97,17 +110,22 @@ function addAppointment() {
         return;
     }
 
+    // Création du nouvel objet à stocker dans Firestore
     const newAppointment = {
-        id: Date.now(), // ID unique simple
-        dateTime: `${dateInput}T${timeInput}:00`,
+        dateTime: new Date(`${dateInput}T${timeInput}:00`).toISOString(), // Format ISO pour le tri
         description: descriptionInput
     };
-
-    const appointments = getAppointments();
-    appointments.push(newAppointment);
-
-    // Sauvegarde et mise à jour de l'affichage
-    saveAppointments(appointments); 
+    
+    // Écriture des données dans Firestore
+    db.collection(COLLECTION_NAME).add(newAppointment)
+        .then(() => {
+            console.log("Rendez-vous ajouté avec succès à Firestore.");
+            // L'écouteur (onSnapshot) s'occupera de rafraîchir l'interface automatiquement !
+        })
+        .catch(error => {
+            console.error("Erreur lors de l'ajout du rendez-vous : ", error);
+            alert("Erreur lors de l'enregistrement du rendez-vous.");
+        });
 
     // Réinitialisation de la modale et fermeture
     document.getElementById('date-input').value = '';
